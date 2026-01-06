@@ -47,7 +47,7 @@ export const revalidate = 3600;
 async function getMenuItems() {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/api/getAllMenuItems`,
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/getMenuCategories`,
       { cache: "no-store" }
     );
 
