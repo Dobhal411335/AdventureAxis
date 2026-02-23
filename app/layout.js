@@ -50,7 +50,7 @@ async function getMenuItems() {
       `${process.env.NEXT_PUBLIC_BASE_URL}/api/getMenuCategories`,
       { cache: "no-store" }
     );
-
+    
     if (!res.ok) return [];
     return res.json();
   } catch (error) {
