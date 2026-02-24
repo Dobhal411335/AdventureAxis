@@ -48,9 +48,8 @@ async function getMenuItems() {
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_BASE_URL}/api/getMenuCategories`,
-      { cache: "no-store" }
+      { next: { revalidate: 3600 } }
     );
-    
     if (!res.ok) return [];
     return res.json();
   } catch (error) {
