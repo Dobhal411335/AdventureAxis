@@ -71,7 +71,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
             <div className="text-right px-10">
               <div className="text-sm text-gray-600">Payment Method</div>
               <div className="font-medium">
-                {order.paymentMethod === 'online' ? 'Online Payment' : 'Cash on Delivery'}
+                {order.paymentMethod === 'online' ? 'Online Payment' : 'Booking Enquiry'}
               </div>
             </div>
           </div>

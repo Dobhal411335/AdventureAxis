@@ -119,7 +119,7 @@ const TrackOrder = ({ orderId: initialOrderId = '' }) => {
                   <p className="text-sm text-gray-500">Payment Method</p>
                   <p className="font-medium capitalize">
                     {orderData.paymentMethod === 'online' ? 'Online Payment' : 
-                     orderData.paymentMethod === 'cod' ? 'Cash on Delivery' : 
+                     orderData.paymentMethod === 'cod' ? 'Booking Enquiry' : 
                      orderData.paymentMethod || 'N/A'}
                   </p>
                 </div>
