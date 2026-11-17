@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Order from '../../../models/Order';
 import connectDB from '@/lib/connectDB';
+import Discount from '@/models/Discount';
 
 export async function POST(req) {
   await connectDB();
@@ -102,6 +103,28 @@ export async function POST(req) {
     // ✅ Save the order
     body.agree = true; // Always set agree true for all new orders
     const order = await Order.create(body);
+
+    // Decrement cart-level promo remaining uses for non-online (e.g. COD) orders.
+    // Online orders are decremented after Razorpay payment verification instead.
+    try {
+      const promoCode = order.promoCode || body.promoCode;
+      const promoDiscount = Number(order.promoDiscount ?? body.promoDiscount) || 0;
+      if (!isOnline && promoCode && promoDiscount > 0) {
+        const updatedCoupon = await Discount.findOneAndUpdate(
+          {
+            couponCode: String(promoCode).trim().toUpperCase(),
+            usesRemaining: { $gt: 0 },
+          },
+          { $inc: { usesRemaining: -1 } },
+          { new: true }
+        );
+        if (!updatedCoupon) {
+          console.warn('Promo usesRemaining already 0 or coupon not found:', promoCode);
+        }
+      }
+    } catch (promoDecError) {
+      console.error('Failed to decrement promo usesRemaining:', promoDecError);
+    }
 
     // ✅ Update quantities using the updateQuantities endpoint
     const products = Array.isArray(body.products) ? body.products : [];

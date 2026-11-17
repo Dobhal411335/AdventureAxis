@@ -9,6 +9,7 @@ const initialForm = {
   percent: "",
   startDate: "",
   endDate: "",
+  maxUses: "",
   category: "",
 };
 
@@ -53,8 +54,9 @@ const CreateDiscount = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.couponCode || (!form.amount && !form.percent) || !form.startDate || !form.endDate) {
-      toast.error("Fill all required fields");
+    const maxUses = Number(form.maxUses);
+    if (!form.couponCode || (!form.amount && !form.percent) || !form.startDate || !form.endDate || !Number.isFinite(maxUses) || maxUses < 1) {
+      toast.error("Fill all required fields (max uses must be at least 1)");
       return;
     }
     setLoading(true);
@@ -71,7 +73,7 @@ const CreateDiscount = () => {
             percent: form.percent ? Number(form.percent) : undefined,
             startDate: form.startDate,
             endDate: form.endDate,
-            // category: form.category,
+            maxUses,
             edit: true
           }),
         });
@@ -86,7 +88,7 @@ const CreateDiscount = () => {
             percent: form.percent ? Number(form.percent) : undefined,
             startDate: form.startDate,
             endDate: form.endDate,
-            // category: form.category,
+            maxUses,
           }),
         });
         data = await res.json();
@@ -144,12 +146,13 @@ const CreateDiscount = () => {
       percent: discount.percent ? String(discount.percent) : "",
       startDate: discount.startDate ? discount.startDate.slice(0, 10) : "",
       endDate: discount.endDate ? discount.endDate.slice(0, 10) : "",
+      maxUses: discount.maxUses != null ? String(discount.maxUses) : "",
       category: discount.category || "",
     });
   };
 
   return (
-    <div style={{ background: "#fff", padding: 24, borderRadius: 12, maxWidth: 900, margin: "40px auto" }}>
+    <div style={{ background: "#fff", padding: 24, borderRadius: 12, maxWidth: 1400, width: "100%", margin: "40px auto" }}>
       <Toaster position="top-center" />
       <form onSubmit={handleSubmit} style={{ marginBottom: 24 }}> 
         <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
@@ -176,6 +179,19 @@ const CreateDiscount = () => {
             <label style={{ fontWeight: 500 }}>Coupon Code End Date</label>
             <input type="date" name="endDate" value={form.endDate} onChange={handleChange} style={inputStyle} required />
           </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontWeight: 500 }}>Coupon can be used (max times)</label>
+            <input
+              type="number"
+              name="maxUses"
+              min={1}
+              value={form.maxUses}
+              onChange={handleChange}
+              placeholder="e.g. 100"
+              style={inputStyle}
+              required
+            />
+          </div>
         </div>
         <div style={{ marginBottom: 16, display: 'flex', gap: 12 }}>
           {editId ? (
@@ -200,13 +216,15 @@ const CreateDiscount = () => {
               <th style={thStyle}>Amount</th>
               <th style={thStyle}>% Value</th>
               <th style={thStyle}>Date Range</th>
+              <th style={thStyle}>Max Uses</th>
+              <th style={thStyle}>Remaining</th>
               <th style={thStyle}>Status</th>
               <th style={thStyle}>Action</th>
             </tr>
           </thead>
           <tbody>
             {discounts.length === 0 && (
-              <tr><td colSpan={8} style={{ textAlign: "center" }}>No discounts found.</td></tr>
+              <tr><td colSpan={9} style={{ textAlign: "center" }}>No discounts found.</td></tr>
             )}
             {discounts.map((d, idx) => (
               <tr key={d._id}>
@@ -215,6 +233,8 @@ const CreateDiscount = () => {
                 <td style={tdStyle}>{d.amount || "-"}</td>
                 <td style={tdStyle}>{d.percent || "-"}</td>
                 <td style={tdStyle}>{d.startDate?.slice(0, 10)} to {d.endDate?.slice(0, 10)}</td>
+                <td style={tdStyle}>{d.maxUses != null ? d.maxUses : "-"}</td>
+                <td style={tdStyle}>{d.usesRemaining != null ? d.usesRemaining : "-"}</td>
                 <td style={tdStyle}>{d.status}</td>
                 <td style={tdStyle}>
                   <Switch

@@ -126,8 +126,14 @@ const OrderDetailsModal = ({ order, onClose }) => {
               </div>
               {order.totalDiscount > 0 && (
                 <div className="flex justify-between text-green-600">
-                  <span>Discount ({order.promoCode || 'Coupon'})</span>
+                  <span>Discount Amount</span>
                   <span>-₹{order.totalDiscount?.toLocaleString('en-IN') || '0.00'}</span>
+                </div>
+              )}
+              {Number(order.promoDiscount) > 0 && (
+                <div className="flex justify-between text-green-600 font-semibold">
+                  <span>Promo Code ({order.promoCode || 'Applied'})</span>
+                  <span>-₹{Number(order.promoDiscount).toLocaleString('en-IN')}</span>
                 </div>
               )}
               <div className="flex justify-between">

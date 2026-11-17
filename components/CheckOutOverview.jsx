@@ -26,6 +26,7 @@ const downloadInvoiceAsPdf = async (orderData) => {
       subTotal,
       totalDiscount,
       promoCode,
+      promoDiscount,
       totalTax,
       shippingCost,
       cartTotal
@@ -89,10 +90,16 @@ const downloadInvoiceAsPdf = async (orderData) => {
             <span>Subtotal:</span>
             <span>₹${Number(subTotal).toFixed(2)}</span>
           </div>
-          ${totalDiscount > 0 ? `
+          ${Number(totalDiscount) > 0 ? `
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #10b981;">
-              <span>Discount${promoCode ? ` (${promoCode})` : ''}:</span>
+              <span>Discount Amount:</span>
               <span>-₹${Number(totalDiscount).toFixed(2)}</span>
+            </div>
+          ` : ''}
+          ${Number(promoDiscount) > 0 ? `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #10b981; font-weight: 600;">
+              <span>Promo Code${promoCode ? ` (${promoCode})` : ''}:</span>
+              <span>-₹${Number(promoDiscount).toFixed(2)}</span>
             </div>
           ` : ''}
           <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
@@ -182,7 +189,9 @@ const CheckOutOverview = ({ checkoutData, paymentMethod, onEdit, onConfirm, load
       shippingCost: checkoutData.shippingCost || 0,
       finalShipping: checkoutData.finalShipping || 0,
       totalDiscount: checkoutData.totalDiscount || 0,
-      promoCode: checkoutData.promoCode || '',
+      promoCode: checkoutData.promoCode || checkoutData.promo?.code || '',
+      promoDiscount:
+        Number(checkoutData.promoDiscount ?? checkoutData.promo?.discount) || 0,
       totalTax: checkoutData.totalTax || taxTotal,
       cartTotal: checkoutData.cartTotal || 0
     };
@@ -204,6 +213,8 @@ const CheckOutOverview = ({ checkoutData, paymentMethod, onEdit, onConfirm, load
     shippingCost = 0,
     totalDiscount = 0,
     promo,
+    promoCode = '',
+    promoDiscount = 0,
     finalShipping = 0,
     taxTotal = 0,
     cartTotal = 0,
@@ -330,6 +341,25 @@ const CheckOutOverview = ({ checkoutData, paymentMethod, onEdit, onConfirm, load
                 <span>Subtotal</span>
                 <span>₹{subTotal.toFixed(2)}</span>
               </div>
+              {Number(totalDiscount) > 0 && (
+                <div className="flex justify-between text-sm text-green-700">
+                  <span>Discount Amount</span>
+                  <span>-₹{Number(totalDiscount).toFixed(2)}</span>
+                </div>
+              )}
+              {(Number(promoDiscount) > 0 || Number(promo?.discount) > 0) && (
+                <div className="flex justify-between text-sm text-green-700 font-semibold">
+                  <span>
+                    Promo Code (
+                    {promoCode || promo?.code || "Applied"}
+                    )
+                  </span>
+                  <span>
+                    -₹
+                    {Number(promoDiscount || promo?.discount || 0).toFixed(2)}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <span>Shipping</span>
                 <span>₹{finalShipping || shippingCost.toFixed(2)}</span>
@@ -342,8 +372,17 @@ const CheckOutOverview = ({ checkoutData, paymentMethod, onEdit, onConfirm, load
                 <span>Total (INR)</span>
                 <span className="text-green-700 text-lg">₹{cartTotal.toFixed(2)}</span>
               </div>
-              {totalDiscount > 0 && (
-                <div className="text-green-700 text-xs mt-2">Nice! You saved ₹{totalDiscount.toFixed(2)} on your order.</div>
+              {(Number(totalDiscount) > 0 ||
+                Number(promoDiscount) > 0 ||
+                Number(promo?.discount) > 0) && (
+                <div className="text-green-700 text-xs mt-2">
+                  Nice! You saved ₹
+                  {(
+                    Number(totalDiscount || 0) +
+                    Number(promoDiscount || promo?.discount || 0)
+                  ).toFixed(2)}{" "}
+                  on your order.
+                </div>
               )}
             </div>
             <div className="text-xs text-gray-600 mt-2">

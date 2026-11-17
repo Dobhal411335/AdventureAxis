@@ -350,10 +350,16 @@ const OrderDetail = ({ order, onBack }) => {
                   <span>Subtotal ({orderData.products?.reduce((sum, item) => sum + item.qty, 0)} items):</span>
                   <span>₹{orderData.subTotal?.toFixed(2)}</span>
                 </div>
-                {orderData.totalDiscount > 0 && (
+                {Number(orderData.totalDiscount) > 0 && (
                   <div className="flex justify-between text-green-600">
-                    <span>Discount ({orderData.promoCode}):</span>
-                    <span>-₹{orderData.totalDiscount?.toFixed(2)}</span>
+                    <span>Discount Amount:</span>
+                    <span>-₹{Number(orderData.totalDiscount).toFixed(2)}</span>
+                  </div>
+                )}
+                {Number(orderData.promoDiscount) > 0 && (
+                  <div className="flex justify-between text-green-700 font-semibold">
+                    <span>Promo Code ({orderData.promoCode || "Applied"}):</span>
+                    <span>-₹{Number(orderData.promoDiscount).toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">

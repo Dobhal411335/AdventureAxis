@@ -258,15 +258,26 @@ const CartDetails = () => {
         setPromoError(data.error || "Invalid promo code.");
         return;
       }
+      if (typeof data.coupon?.usesRemaining === "number" && data.coupon.usesRemaining <= 0) {
+        setPromoError("Promo code expired.");
+        return;
+      }
       // Check if discount is not greater than cart total (should be handled by API, but double check)
       if (data.discount >= cartTotalBeforePromo) {
         setPromoError("Discount cannot exceed or equal cart total.");
         return;
       }
-      setAppliedPromo(promoCode);
-      setAppliedPromoDetails(data.coupon); // store full coupon details
-      localStorage.setItem("appliedPromoCode", promoCode); // store for checkout
-      localStorage.setItem("appliedPromoDetails", JSON.stringify(data.coupon));
+      const normalizedCode = (data.coupon?.couponCode || promoCode).toUpperCase();
+      const couponDetails = {
+        ...data.coupon,
+        usesRemaining: data.coupon?.usesRemaining,
+        maxUses: data.coupon?.maxUses,
+        discount: data.discount,
+      };
+      setAppliedPromo(normalizedCode);
+      setAppliedPromoDetails(couponDetails);
+      localStorage.setItem("appliedPromoCode", normalizedCode);
+      localStorage.setItem("appliedPromoDetails", JSON.stringify(couponDetails));
       setPromoCode(""); // clear input
     } catch (err) {
       setPromoError("Failed to validate promo code. Please try again.");
@@ -320,6 +331,21 @@ const CartDetails = () => {
 
   const finalShipping = FinalShipping || 0;
 
+  const taxTotal = cart.reduce((sum, item) => {
+    const vendorPrice = item.vendorPrice ? Number(item.vendorPrice) : undefined;
+    // For vendors, use vendorPrice; for non-vendors, use after-discount price
+    const price =
+      isVendor && vendorPrice !== undefined
+        ? vendorPrice
+        : getAfterDiscount(item);
+
+    const cgst = Number(item.cgst) || 0;
+    const sgst = Number(item.sgst) || 0;
+    const itemTax = ((cgst + sgst) / 100) * price;
+
+    return sum + itemTax * item.qty;
+  }, 0);
+
   // Remove promo if a discounted/coupon item is present
   const hasDiscountedItem = cart.some(
     (item) => item.discountPercent || item.discountAmount || item.couponApplied
@@ -347,20 +373,6 @@ const CartDetails = () => {
     const maxDiscount = totalAfterDiscount + taxTotal + finalShipping;
     if (promoDiscount > maxDiscount) promoDiscount = maxDiscount;
   }
-  const taxTotal = cart.reduce((sum, item) => {
-    const vendorPrice = item.vendorPrice ? Number(item.vendorPrice) : undefined;
-    // For vendors, use vendorPrice; for non-vendors, use after-discount price
-    const price =
-      isVendor && vendorPrice !== undefined
-        ? vendorPrice
-        : getAfterDiscount(item);
-
-    const cgst = Number(item.cgst) || 0;
-    const sgst = Number(item.sgst) || 0;
-    const itemTax = ((cgst + sgst) / 100) * price;
-
-    return sum + itemTax * item.qty;
-  }, 0);
 
   const [finalAmount, setFinalAmount] = useState(0);
 

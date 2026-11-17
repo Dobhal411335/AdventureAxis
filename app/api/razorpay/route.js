@@ -5,6 +5,7 @@ import Order from "@/models/Order"; // Import your Order model
 import connectDB from "@/lib/connectDB";
 import User from "@/models/User";
 import Product from '@/models/Product';
+import Discount from '@/models/Discount';
 import { ObjectId } from 'mongodb';
 
 // Validate Razorpay credentials
@@ -469,6 +470,27 @@ export async function PUT(request) {
         } // else leave as-is if already present
         order.agree = true; // Always set agree true for online orders (on update)
         await order.save();
+
+        // Decrement cart-level promo remaining uses after successful payment
+        try {
+            const promoCode = checkoutData?.promoCode || order.promoCode;
+            const promoDiscount = Number(checkoutData?.promoDiscount ?? order.promoDiscount) || 0;
+            if (promoCode && promoDiscount > 0) {
+                const updatedCoupon = await Discount.findOneAndUpdate(
+                    {
+                        couponCode: String(promoCode).trim().toUpperCase(),
+                        usesRemaining: { $gt: 0 },
+                    },
+                    { $inc: { usesRemaining: -1 } },
+                    { new: true }
+                );
+                if (!updatedCoupon) {
+                    console.warn('Promo usesRemaining already 0 or coupon not found:', promoCode);
+                }
+            }
+        } catch (promoDecError) {
+            console.error('Failed to decrement promo usesRemaining:', promoDecError);
+        }
 
         // In app/api/razorpay/route.js, find the quantity update section and update it to:
         const products = Array.isArray(cart) ? cart :
